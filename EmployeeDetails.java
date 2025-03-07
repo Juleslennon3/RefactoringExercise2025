@@ -648,15 +648,28 @@ public class EmployeeDetails extends JFrame implements ActionListener, ItemListe
 
 	// check for correct PPS format and look if PPS already in use
 	public boolean correctPps(String pps, long currentByte) {
-	    if (!ValidationUtils.isValidPps(pps)) {
-	        return true;
-	    }
-	    application.openReadFile(file.getAbsolutePath());
-	    boolean ppsExist = application.isPpsExist(pps, currentByte);
-	    application.closeReadFile();
-	    return ppsExist;
-	}
+		boolean ppsExist = false;
+		// check for correct PPS format based on assignment description
+		if (pps.length() == 8 || pps.length() == 9) {
+			if (Character.isDigit(pps.charAt(0)) && Character.isDigit(pps.charAt(1))
+					&& Character.isDigit(pps.charAt(2))	&& Character.isDigit(pps.charAt(3)) 
+					&& Character.isDigit(pps.charAt(4))	&& Character.isDigit(pps.charAt(5)) 
+					&& Character.isDigit(pps.charAt(6))	&& Character.isLetter(pps.charAt(7))
+					&& (pps.length() == 8 || Character.isLetter(pps.charAt(8)))) {
+				// open file for reading
+				application.openReadFile(file.getAbsolutePath());
+				// look in file is PPS already in use
+				ppsExist = application.isPpsExist(pps, currentByte);
+				application.closeReadFile();// close file for reading
+			} // end if
+			else
+				ppsExist = true;
+		} // end if
+		else
+			ppsExist = true;
 
+		return ppsExist;
+	}// end correctPPS
 
 	// check if file name has extension .dat
 	private boolean checkFileName(File fileName) {
@@ -688,74 +701,62 @@ public class EmployeeDetails extends JFrame implements ActionListener, ItemListe
 		return anyChanges;
 	}// end checkForChanges
 
+	// check for input in text fields
 	private boolean checkInput() {
-	    boolean valid = true;
+		boolean valid = true;
+		// if any of inputs are in wrong format, colour text field and display
+		// message
+		if (ppsField.isEditable() && ppsField.getText().trim().isEmpty()) {
+			ppsField.setBackground(new Color(255, 150, 150));
+			valid = false;
+		} // end if
+		if (ppsField.isEditable() && correctPps(ppsField.getText().trim(), currentByteStart)) {
+			ppsField.setBackground(new Color(255, 150, 150));
+			valid = false;
+		} // end if
+		if (surnameField.isEditable() && surnameField.getText().trim().isEmpty()) {
+			surnameField.setBackground(new Color(255, 150, 150));
+			valid = false;
+		} // end if
+		if (firstNameField.isEditable() && firstNameField.getText().trim().isEmpty()) {
+			firstNameField.setBackground(new Color(255, 150, 150));
+			valid = false;
+		} // end if
+		if (genderCombo.getSelectedIndex() == 0 && genderCombo.isEnabled()) {
+			genderCombo.setBackground(new Color(255, 150, 150));
+			valid = false;
+		} // end if
+		if (departmentCombo.getSelectedIndex() == 0 && departmentCombo.isEnabled()) {
+			departmentCombo.setBackground(new Color(255, 150, 150));
+			valid = false;
+		} // end if
+		try {// try to get values from text field
+			Double.parseDouble(salaryField.getText());
+			// check if salary is greater than 0
+			if (Double.parseDouble(salaryField.getText()) < 0) {
+				salaryField.setBackground(new Color(255, 150, 150));
+				valid = false;
+			} // end if
+		} // end try
+		catch (NumberFormatException num) {
+			if (salaryField.isEditable()) {
+				salaryField.setBackground(new Color(255, 150, 150));
+				valid = false;
+			} // end if
+		} // end catch
+		if (fullTimeCombo.getSelectedIndex() == 0 && fullTimeCombo.isEnabled()) {
+			fullTimeCombo.setBackground(new Color(255, 150, 150));
+			valid = false;
+		} // end if
+			// display message if any input or format is wrong
+		if (!valid)
+			JOptionPane.showMessageDialog(null, "Wrong values or format! Please check!");
+		// set text field to white colour if text fields are editable
+		if (ppsField.isEditable())
+			setToWhite();
 
-	    if (!validatePps()) valid = false;
-	    if (!validateTextFields()) valid = false;
-	    if (!validateComboBoxes()) valid = false;
-	    if (!validateSalary()) valid = false;
-
-	    if (!valid) {
-	        JOptionPane.showMessageDialog(null, "Wrong values or format! Please check!");
-	    }
-
-	    return valid;
+		return valid;
 	}
-
-	private boolean validatePps() {
-	    if (ppsField.isEditable() && !ValidationUtils.isValidPps(ppsField.getText().trim())) {
-	        ppsField.setBackground(new Color(255, 150, 150));
-	        return false;
-	    }
-	    return true;
-	}
-
-	private boolean validateTextFields() {
-	    boolean valid = true;
-	    
-	    if (surnameField.isEditable() && !ValidationUtils.isValidString(surnameField.getText())) {
-	        surnameField.setBackground(new Color(255, 150, 150));
-	        valid = false;
-	    }
-
-	    if (firstNameField.isEditable() && !ValidationUtils.isValidString(firstNameField.getText())) {
-	        firstNameField.setBackground(new Color(255, 150, 150));
-	        valid = false;
-	    }
-	    
-	    return valid;
-	}
-
-	private boolean validateComboBoxes() {
-	    boolean valid = true;
-
-	    if (genderCombo.getSelectedIndex() == 0 && genderCombo.isEnabled()) {
-	        genderCombo.setBackground(new Color(255, 150, 150));
-	        valid = false;
-	    }
-
-	    if (departmentCombo.getSelectedIndex() == 0 && departmentCombo.isEnabled()) {
-	        departmentCombo.setBackground(new Color(255, 150, 150));
-	        valid = false;
-	    }
-
-	    if (fullTimeCombo.getSelectedIndex() == 0 && fullTimeCombo.isEnabled()) {
-	        fullTimeCombo.setBackground(new Color(255, 150, 150));
-	        valid = false;
-	    }
-
-	    return valid;
-	}
-
-	private boolean validateSalary() {
-	    if (!ValidationUtils.isValidSalary(salaryField.getText())) {
-	        salaryField.setBackground(new Color(255, 150, 150));
-	        return false;
-	    }
-	    return true;
-	}
-
 
 	// set text field background colour to white
 	private void setToWhite() {
