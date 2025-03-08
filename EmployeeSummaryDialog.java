@@ -5,6 +5,8 @@
  * */
 
 import java.awt.Component;
+import javax.swing.*;
+import java.awt.*;
 import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
@@ -31,22 +33,34 @@ public class EmployeeSummaryDialog extends JDialog implements ActionListener {
 	Vector<Object> allEmployees;
 	JButton back;
 	
-	public EmployeeSummaryDialog(Vector<Object> allEmployees) {
-		setTitle("Employee Summary");
-		setModal(true);
-		this.allEmployees = allEmployees;
-
-		setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-
-		JScrollPane scrollPane = new JScrollPane(summaryPane());
-		setContentPane(scrollPane);
-
-		setSize(850, 500);
-		setLocation(350, 250);
-		setVisible(true);
-
+	public EmployeeSummaryDialog(Frame parent, Employee employee) {
+	    super(parent, "Employee Summary", true);
+	    setupUI(employee);
 	}
-	// initialise container
+
+	private void setupUI(Employee employee) {
+	    setLayout(new BorderLayout());
+	    JPanel panel = new JPanel(new GridLayout(8, 2, 5, 5));
+
+	    panel.add(new JLabel("Employee ID:"));   panel.add(new JLabel(String.valueOf(employee.getEmployeeId())));
+	    panel.add(new JLabel("PPS Number:"));    panel.add(new JLabel(employee.getPps()));
+	    panel.add(new JLabel("First Name:"));    panel.add(new JLabel(employee.getFirstName()));
+	    panel.add(new JLabel("Surname:"));       panel.add(new JLabel(employee.getSurname()));
+	    panel.add(new JLabel("Gender:"));        panel.add(new JLabel(employee.getGender() == 'M' ? "Male" : "Female"));
+	    panel.add(new JLabel("Department:"));    panel.add(new JLabel(employee.getDepartment()));
+	    panel.add(new JLabel("Salary:"));        panel.add(new JLabel(String.valueOf(employee.getSalary())));
+	    panel.add(new JLabel("Full Time:"));     panel.add(new JLabel(employee.getFullTime() ? "Yes" : "No"));
+
+	    add(panel, BorderLayout.CENTER);
+	    
+	    JButton closeButton = new JButton("Close");
+	    closeButton.addActionListener(e -> dispose());
+	    add(closeButton, BorderLayout.SOUTH);
+
+	    pack();
+	    setLocationRelativeTo(getParent());
+	}
+	// Initialize container
 	public Container summaryPane() {
 		JPanel summaryDialog = new JPanel(new MigLayout());
 		JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
@@ -68,7 +82,7 @@ public class EmployeeSummaryDialog extends JDialog implements ActionListener {
 		for (int i = 0; i < headerName.length; i++) {
 			header.addElement(headerName[i]);
 		}// end for
-		// construnct table and choose table model for each column
+		// Construct table and choose table model for each column
 		tableModel = new DefaultTableModel(this.allEmployees, header) {
 			public Class getColumnClass(int c) {
 				switch (c) {

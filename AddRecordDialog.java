@@ -1,201 +1,165 @@
-/*
- * 
- * This is a dialog for adding new Employees and saving records to file
- * 
- * */
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.*;
 
-import java.awt.Color;
-import java.awt.Container;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+public class AddRecordDialog extends JDialog {
+    // Listener interface for add/edit actions (to decouple from main UI)
+    public interface AddRecordListener {
+        void onAddEmployee(Employee emp);
+        void onEditEmployee(Employee emp);
+    }
 
-import javax.swing.BorderFactory;
-import javax.swing.JButton;
-import javax.swing.JComboBox;
-import javax.swing.JDialog;
-import javax.swing.JFrame;
-import javax.swing.JLabel;
-import javax.swing.JOptionPane;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.JTextField;
+    private AddRecordListener listener;
+    private boolean editMode = false;
+    private Employee existingEmployee;  // holds the employee being edited, if any
 
-import net.miginfocom.swing.MigLayout;
+    // Form input fields
+    private JTextField idField;
+    private JTextField ppsField;
+    private JTextField firstNameField;
+    private JTextField surnameField;
+    private JComboBox<String> genderCombo;
+    private JTextField departmentField;
+    private JTextField salaryField;
+    private JCheckBox fullTimeCheck;
+    private JButton saveButton;
+    private JButton cancelButton;
 
-public class AddRecordDialog extends JDialog implements ActionListener {
-	JTextField idField, ppsField, surnameField, firstNameField, salaryField;
-	JComboBox<String> genderCombo, departmentCombo, fullTimeCombo;
-	JButton save, cancel;
-	EmployeeDetails parent;
-	// constructor for add record dialog
-	public AddRecordDialog(EmployeeDetails parent) {
-		setTitle("Add Record");
-		setModal(true);
-		this.parent = parent;
-		this.parent.setEnabled(false);
-		setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-		
-		JScrollPane scrollPane = new JScrollPane(dialogPane());
-		setContentPane(scrollPane);
-		
-		getRootPane().setDefaultButton(save);
-		
-		setSize(500, 370);
-		setLocation(350, 250);
-		setVisible(true);
-	}// end AddRecordDialog
+    /** Constructor for adding a new record */
+    public AddRecordDialog(Frame parent, AddRecordListener listener) {
+        super(parent, "Add Employee", true);
+        this.listener = listener;
+        setupUI();
+    }
 
-	// initialize dialog container
-	public Container dialogPane() {
-		JPanel empDetails, buttonPanel;
-		empDetails = new JPanel(new MigLayout());
-		buttonPanel = new JPanel();
-		JTextField field;
+    /** Constructor for editing an existing record */
+    public AddRecordDialog(Frame parent, AddRecordListener listener, Employee employeeToEdit) {
+        super(parent, "Edit Employee", true);
+        this.listener = listener;
+        this.editMode = true;
+        this.existingEmployee = employeeToEdit;
+        setupUI();
+        // Populate fields with existing data for editing
+        if (existingEmployee != null) {
+            idField.setText(String.valueOf(existingEmployee.getId()));
+            idField.setEditable(false);  // ID cannot be changed when editing
+            ppsField.setText(existingEmployee.getPps());
+            firstNameField.setText(existingEmployee.getFirstName());
+            surnameField.setText(existingEmployee.getSurname());
+            genderCombo.setSelectedItem(existingEmployee.getGender() == 'M' ? "Male" : "Female");
+            departmentField.setText(existingEmployee.getDepartment());
+            salaryField.setText(String.valueOf(existingEmployee.getSalary()));
+            fullTimeCheck.setSelected(existingEmployee.getFullTime());
+        }
+    }
 
-		empDetails.setBorder(BorderFactory.createTitledBorder("Employee Details"));
+    private void setupUI() {
+        setLayout(new GridBagLayout());
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(4, 4, 4, 4);
+        gbc.anchor = GridBagConstraints.WEST;
 
-		empDetails.add(new JLabel("ID:"), "growx, pushx");
-		empDetails.add(idField = new JTextField(20), "growx, pushx, wrap");
-		idField.setEditable(false);
-		
+        // Build form labels and fields
+        gbc.gridx = 0; gbc.gridy = 0;
+        add(new JLabel("Employee ID:"), gbc);
+        gbc.gridx = 1;
+        idField = new JTextField(10);
+        add(idField, gbc);
 
-		empDetails.add(new JLabel("PPS Number:"), "growx, pushx");
-		empDetails.add(ppsField = new JTextField(20), "growx, pushx, wrap");
+        gbc.gridx = 0; gbc.gridy = 1;
+        add(new JLabel("PPS Number:"), gbc);
+        gbc.gridx = 1;
+        ppsField = new JTextField(15);
+        add(ppsField, gbc);
 
-		empDetails.add(new JLabel("Surname:"), "growx, pushx");
-		empDetails.add(surnameField = new JTextField(20), "growx, pushx, wrap");
+        gbc.gridx = 0; gbc.gridy = 2;
+        add(new JLabel("First Name:"), gbc);
+        gbc.gridx = 1;
+        firstNameField = new JTextField(15);
+        add(firstNameField, gbc);
 
-		empDetails.add(new JLabel("First Name:"), "growx, pushx");
-		empDetails.add(firstNameField = new JTextField(20), "growx, pushx, wrap");
+        gbc.gridx = 0; gbc.gridy = 3;
+        add(new JLabel("Surname:"), gbc);
+        gbc.gridx = 1;
+        surnameField = new JTextField(15);
+        add(surnameField, gbc);
 
-		empDetails.add(new JLabel("Gender:"), "growx, pushx");
-		empDetails.add(genderCombo = new JComboBox<String>(this.parent.gender), "growx, pushx, wrap");
+        gbc.gridx = 0; gbc.gridy = 4;
+        add(new JLabel("Gender:"), gbc);
+        gbc.gridx = 1;
+        genderCombo = new JComboBox<>(new String[]{"Male", "Female"});
+        add(genderCombo, gbc);
 
-		empDetails.add(new JLabel("Department:"), "growx, pushx");
-		empDetails.add(departmentCombo = new JComboBox<String>(this.parent.department), "growx, pushx, wrap");
+        gbc.gridx = 0; gbc.gridy = 5;
+        add(new JLabel("Department:"), gbc);
+        gbc.gridx = 1;
+        departmentField = new JTextField(15);
+        add(departmentField, gbc);
 
-		empDetails.add(new JLabel("Salary:"), "growx, pushx");
-		empDetails.add(salaryField = new JTextField(20), "growx, pushx, wrap");
+        gbc.gridx = 0; gbc.gridy = 6;
+        add(new JLabel("Salary:"), gbc);
+        gbc.gridx = 1;
+        salaryField = new JTextField(10);
+        add(salaryField, gbc);
 
-		empDetails.add(new JLabel("Full Time:"), "growx, pushx");
-		empDetails.add(fullTimeCombo = new JComboBox<String>(this.parent.fullTime), "growx, pushx, wrap");
+        gbc.gridx = 0; gbc.gridy = 7;
+        add(new JLabel("Full Time:"), gbc);
+        gbc.gridx = 1;
+        fullTimeCheck = new JCheckBox();
+        add(fullTimeCheck, gbc);
 
-		buttonPanel.add(save = new JButton("Save"));
-		save.addActionListener(this);
-		save.requestFocus();
-		buttonPanel.add(cancel = new JButton("Cancel"));
-		cancel.addActionListener(this);
+        // Buttons
+        saveButton = new JButton(editMode ? "Save Changes" : "Add");
+        cancelButton = new JButton("Cancel");
+        JPanel buttonPanel = new JPanel();
+        buttonPanel.add(saveButton);
+        buttonPanel.add(cancelButton);
+        gbc.gridx = 0; gbc.gridy = 8; gbc.gridwidth = 2; gbc.anchor = GridBagConstraints.CENTER;
+        add(buttonPanel, gbc);
 
-		empDetails.add(buttonPanel, "span 2,growx, pushx,wrap");
-		// loop through all panel components and add fonts and listeners
-		for (int i = 0; i < empDetails.getComponentCount(); i++) {
-			empDetails.getComponent(i).setFont(this.parent.font1);
-			if (empDetails.getComponent(i) instanceof JComboBox) {
-				empDetails.getComponent(i).setBackground(Color.WHITE);
-			}// end if
-			else if(empDetails.getComponent(i) instanceof JTextField){
-				field = (JTextField) empDetails.getComponent(i);
-				if(field == ppsField)
-					field.setDocument(new JTextFieldLimit(9));
-				else
-				field.setDocument(new JTextFieldLimit(20));
-			}// end else if
-		}// end for
-		idField.setText(Integer.toString(this.parent.getNextFreeId()));
-		return empDetails;
-	}
+        // Button listeners
+        saveButton.addActionListener(e -> onSave());
+        cancelButton.addActionListener(e -> dispose());
 
-	// add record to file
-	public void addRecord() {
-		boolean fullTime = false;
-		Employee theEmployee;
+        pack();
+        setLocationRelativeTo(getParent());
+    }
 
-		if (((String) fullTimeCombo.getSelectedItem()).equalsIgnoreCase("Yes"))
-			fullTime = true;
-		// create new Employee record with details from text fields
-		theEmployee = new Employee(Integer.parseInt(idField.getText()), ppsField.getText().toUpperCase(), surnameField.getText().toUpperCase(),
-				firstNameField.getText().toUpperCase(), genderCombo.getSelectedItem().toString().charAt(0),
-				departmentCombo.getSelectedItem().toString(), Double.parseDouble(salaryField.getText()), fullTime);
-		this.parent.currentEmployee = theEmployee;
-		this.parent.addRecord(theEmployee);
-		this.parent.displayRecords(theEmployee);
-	}
+    /** Handle Save/Add button click: validate inputs and notify listener. */
+    private void onSave() {
+        // Validate input fields using ValidationUtil
+        if (!ValidationUtil.isValidId(idField.getText(), 100)) {
+            JOptionPane.showMessageDialog(this, "Invalid Employee ID (must be a number between 1 and 100).");
+            return;
+        }
+        if (!ValidationUtil.isValidPps(ppsField.getText())) {
+            JOptionPane.showMessageDialog(this, "PPS Number must be exactly 7 characters.");
+            return;
+        }
+        if (!ValidationUtil.isValidName(firstNameField.getText()) || !ValidationUtil.isValidName(surnameField.getText())) {
+            JOptionPane.showMessageDialog(this, "First Name and Surname cannot be empty.");
+            return;
+        }
+        if (!ValidationUtil.isValidSalary(salaryField.getText())) {
+            JOptionPane.showMessageDialog(this, "Salary must be a valid non-negative number.");
+            return;
+        }
+        // Construct Employee object from input fields
+        int id = Integer.parseInt(idField.getText().trim());
+        String pps = ppsField.getText().trim();
+        String firstName = firstNameField.getText().trim();
+        String surname = surnameField.getText().trim();
+        char gender = genderCombo.getSelectedItem().equals("Male") ? 'M' : 'F';
+        String department = departmentField.getText().trim();
+        double salary = Double.parseDouble(salaryField.getText().trim());
+        boolean fullTime = fullTimeCheck.isSelected();
 
-	// check for input in text fields
-	public boolean checkInput() {
-		boolean valid = true;
-		// if any of inputs are in wrong format, colour text field and display message
-		if (ppsField.getText().equals("")) {
-			ppsField.setBackground(new Color(255, 150, 150));
-			valid = false;
-		}// end if
-		if (this.parent.correctPps(this.ppsField.getText().trim(), -1)) {
-			ppsField.setBackground(new Color(255, 150, 150));
-			valid = false;
-		}// end if
-		if (surnameField.getText().isEmpty()) {
-			surnameField.setBackground(new Color(255, 150, 150));
-			valid = false;
-		}// end if
-		if (firstNameField.getText().isEmpty()) {
-			firstNameField.setBackground(new Color(255, 150, 150));
-			valid = false;
-		}// end if
-		if (genderCombo.getSelectedIndex() == 0) {
-			genderCombo.setBackground(new Color(255, 150, 150));
-			valid = false;
-		}// end if
-		if (departmentCombo.getSelectedIndex() == 0) {
-			departmentCombo.setBackground(new Color(255, 150, 150));
-			valid = false;
-		}// end if
-		try {// try to get values from text field
-			Double.parseDouble(salaryField.getText());
-			// check if salary is greater than 0
-			if (Double.parseDouble(salaryField.getText()) < 0) {
-				salaryField.setBackground(new Color(255, 150, 150));
-				valid = false;
-			}// end if
-		}// end try
-		catch (NumberFormatException num) {
-			salaryField.setBackground(new Color(255, 150, 150));
-			valid = false;
-		}// end catch
-		if (fullTimeCombo.getSelectedIndex() == 0) {
-			fullTimeCombo.setBackground(new Color(255, 150, 150));
-			valid = false;
-		}// end if
-		return valid;
-	}// end checkInput
-
-	// set text field to white colour
-	public void setToWhite() {
-		ppsField.setBackground(Color.WHITE);
-		surnameField.setBackground(Color.WHITE);
-		firstNameField.setBackground(Color.WHITE);
-		salaryField.setBackground(Color.WHITE);
-		genderCombo.setBackground(Color.WHITE);
-		departmentCombo.setBackground(Color.WHITE);
-		fullTimeCombo.setBackground(Color.WHITE);
-	}// end setToWhite
-
-	// action performed
-	public void actionPerformed(ActionEvent e) {
-		// if chosen option save, save record to file
-		if (e.getSource() == save) {
-			// if inputs correct, save record
-			if (checkInput()) {
-				addRecord();// add record to file
-				dispose();// dispose dialog
-				this.parent.changesMade = true;
-			}// end if
-			// else display message and set text fields to white colour
-			else {
-				JOptionPane.showMessageDialog(null, "Wrong values or format! Please check!");
-				setToWhite();
-			}// end else
-		}// end if
-		else if (e.getSource() == cancel)
-			dispose();// dispose dialog
-	}// end actionPerformed
-}// end class AddRecordDialog
+        Employee emp = new Employee(id, pps, firstName, surname, gender, department, salary, fullTime);
+        if (editMode) {
+            listener.onEditEmployee(emp);
+        } else {
+            listener.onAddEmployee(emp);
+        }
+        dispose();
+    }
+}

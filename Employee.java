@@ -47,6 +47,11 @@ public class Employee{
 	public String getPps() {
 		return pps;
 	}
+	
+	public int getId() {
+	    return this.employeeId;
+	}
+
 
 	public String getSurname() {
 		return this.surname;
